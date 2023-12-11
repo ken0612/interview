@@ -3,8 +3,10 @@
     <div class="full-width q-px-xl">
       <div class="q-mb-xl">
         <q-input v-model="tempData.name" label="姓名" />
-        <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-input v-model.number="tempData.age" label="年齡" />
+        <q-btn @click="addPersonData" color="primary" class="q-mt-md"
+          >新增</q-btn
+        >
       </div>
 
       <q-table
@@ -35,7 +37,8 @@
               :props="props"
               style="min-width: 120px"
             >
-              <div>{{ col.value }}</div>
+              <input v-show="isEdit" v-model="col.value" />
+              <div v-show="!isEdit">{{ col.value }}</div>
             </q-td>
             <q-td class="text-right" auto-width v-if="tableButtons.length > 0">
               <q-btn
@@ -46,6 +49,7 @@
                 color="grey-6"
                 round
                 dense
+                :disable="btn.disable"
                 :icon="btn.icon"
                 class="q-ml-md"
                 padding="5px 5px"
@@ -86,10 +90,13 @@ interface btnType {
   icon: string;
   status: string;
 }
+const personId = ref(1);
 const blockData = ref([
   {
+    id: personId.value,
     name: 'test',
     age: 25,
+    isEdit: false,
   },
 ]);
 const tableConfig = ref([
@@ -108,23 +115,90 @@ const tableConfig = ref([
 ]);
 const tableButtons = ref([
   {
+    label: '儲存',
+    icon: 'save',
+    status: 'save',
+    disable: true,
+  },
+  {
     label: '編輯',
     icon: 'edit',
     status: 'edit',
+    disable: false,
   },
   {
     label: '刪除',
     icon: 'delete',
     status: 'delete',
+    disable: false,
   },
 ]);
 
+const isEdit = ref(false);
 const tempData = ref({
   name: '',
   age: '',
 });
 function handleClickOption(btn, data) {
   // ...
+  // axios
+  //   .get('/crudTest')
+  //   .then((res) => {
+  //     console.log(res);
+  //   })
+  //   .catch((err) => {
+  //     console.log(err.message);
+  //   });
+
+  console.log(btn, data);
+  console.log(btn.label);
+  if (btn.label === '編輯') {
+    isEdit.value = true;
+    tableButtons.value[1].disable = true;
+    tableButtons.value[0].disable = false;
+  } else {
+    tableButtons.value[0].disable = true;
+    tableButtons.value[1].disable = false;
+    isEdit.value = false;
+    for (let i = 0; i < blockData.value.length; i++) {
+      if (blockData.value[i] == data) {
+        blockData.value[i] = data;
+      }
+    }
+  }
+
+  if (btn.label === '刪除') {
+    const confirmResult = confirm('確定要刪除嗎？');
+    console.log(confirmResult);
+    if (confirmResult) {
+      for (let i = 0; i < blockData.value.length; i++) {
+        if (data.id === blockData.value[i].id) {
+          blockData.value.splice(i, 1);
+        }
+      }
+    }
+  }
+}
+
+function addPersonData() {
+  personId.value++;
+  const vali = /^(100|[1-9]\d?)$/;
+  if (!vali.test(tempData.value.age)) {
+    alert('年齡只能輸入整數');
+    return;
+  }
+  if (tempData.value.name == '' || tempData.value.name == null) {
+    alert('請填寫姓名！');
+    return;
+  }
+  let newData = {
+    id: personId.value,
+    name: tempData.value.name,
+    age: parseInt(tempData.value.age, 10),
+    isEdit: false,
+  };
+  blockData.value.unshift(newData);
+  (tempData.value.name = ''), (tempData.value.age = '');
 }
 </script>
 
